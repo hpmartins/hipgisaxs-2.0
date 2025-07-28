@@ -12,14 +12,17 @@ from .ff import cuboid, cone, cone_stack, cone_shell, cylinder, sphere
 try:
     from .ff import MeshFF
 except ImportError:
-    warnings.warn('failed to import meshff, required for triangulated structures', stacklevel=2)
+    warnings.warn(
+        "failed to import meshff, required for triangulated structures", stacklevel=2
+    )
+
 
 def makeShapeObject(shape):
-    fftype = shape.pop('formfactor')
+    fftype = shape.pop("formfactor")
     if fftype in globals():
         ob = globals()[fftype](**shape)
     else:
-        raise ValueError('Unknown formfactor')
+        raise ValueError("Unknown formfactor")
     return ob
 
 
@@ -38,28 +41,28 @@ class CoreShell(ShapeBase):
     def __init__(self, core, shell):
         self.core = makeShapeObject(core)
         self.shell = makeShapeObject(shell)
-
-        super().__init__(delta=shell.delta,
-                         beta=shell.beta,
-                         locations=shell.locations,
-                         orient=shell.orient)
+        super().__init__(
+            delta=self.shell.delta,
+            beta=self.shell.beta,
+            locations=self.shell.locations,
+            orient=self.shell.orient,
+        )
 
     def ff(self, qx, qy, qz):
         ff_core = self.core.ff(qx, qy, qz)
         refidx_core = 2 * complex(self.core.delta, self.core.beta)
         ff_shell = self.shell.ff(qx, qy, qz) - ff_core
         refidx_shell = 2 * complex(self.shell.delta, self.shell.beta)
-        return (ff_shell + (refidx_core - refidx_shell) * ff_core)
+        return ff_shell + (refidx_core - refidx_shell) * ff_core
 
 
 class Unitcell:
     def __init__(self, shapes, delta=0, beta=0):
-
         self.shapes = []
         self.ns2 = 2 * complex(delta, beta)
         for shape in shapes:
-            if shape['formfactor'] == 'CoreShell':
-                self.shapes.append(CoreShell(shape))
+            if shape["formfactor"] == "CoreShell":
+                self.shapes.append(CoreShell(shape["Core"], shape["Shell"]))
             else:
                 self.shapes.append(makeShapeObject(shape))
 
@@ -70,19 +73,21 @@ class Unitcell:
             tempff = shape.ff(qx, qy, qz)
             locs = shape.locations
             if locs is None:
-                locs = [{'x': 0, 'y': 0, 'z': 0}]
+                locs = [{"x": 0, "y": 0, "z": 0}]
             for l in locs:
-                tempff += tempff * np.exp(1j * (qx * l['x'] + qy * l['y'] + qz * l['z']))
-            ff += tempff;
+                tempff += tempff * np.exp(
+                    1j * (qx * l["x"] + qy * l["y"] + qz * l["z"])
+                )
+            ff += tempff
         return ff
 
 
 # ----basic shapes------#
-class Cyliner(ShapeBase):
+class Cylinder(ShapeBase):
     def __init__(self, *args, radius, height, **kwargs):
         super().__init__(*args, **kwargs)
         self.radius = radius
-        self.height = height 
+        self.height = height
 
     # calculate form-factor
     def ff(self, qx, qy, qz):
