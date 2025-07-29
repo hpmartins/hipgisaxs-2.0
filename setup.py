@@ -71,6 +71,17 @@ class CMakeBuildExt(build_ext):
             super().build_extension(ext)
 
 
+def check_cuda_available():
+    """Check if CUDA is available for compilation"""
+    try:
+        result = subprocess.run(
+            ["nvcc", "--version"], capture_output=True, text=True, timeout=10
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return False
+
+
 # versioning
 main_ns = {}
 ver_path = os.path.join("hipgisaxs", "_version.py")
@@ -88,18 +99,27 @@ attrs = {
 }
 
 
-try:
-    ext_attrs = {
-        "ext_modules": [CMakeExtension("hipgisaxs.ff.meshff", os.getcwd())],
-        "cmdclass": {"build_ext": CMakeBuildExt},
-    }
-    kwargs = attrs.copy()
-    kwargs.update(ext_attrs)
-    setup(**kwargs)
-except ext_errors as ex:
-    log.warning(ex)
-    log.warning("CUDA Extension was not complied. Tyring without the extension")
+# Check if CUDA is available and add extensions conditionally
+cuda_available = check_cuda_available()
+
+if cuda_available:
+    log.info("CUDA detected. Building with CUDA extensions.")
+    try:
+        ext_attrs = {
+            "ext_modules": [CMakeExtension("hipgisaxs.ff.meshff", os.getcwd())],
+            "cmdclass": {"build_ext": CMakeBuildExt},
+        }
+        kwargs = attrs.copy()
+        kwargs.update(ext_attrs)
+        setup(**kwargs)
+    except ext_errors as ex:
+        log.warning(ex)
+        log.warning("CUDA Extension compilation failed. Installing without extensions.")
+        setup(**attrs)
+        log.info(
+            """HipGISAXS was installed without CUDA Extensions.
+            If you think this is a mistake, check logfiles and fix errors."""
+        )
+else:
+    log.info("CUDA not detected. Installing without CUDA extensions.")
     setup(**attrs)
-    log.info(
-        "HipGISAXS was installed without CUDA Extensions. If you think this is mistake, check logfiles and fix errors."
-    )
