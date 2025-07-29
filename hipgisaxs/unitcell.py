@@ -75,9 +75,9 @@ class Unitcell:
             locs = shape.locations
             if locs is None:
                 locs = [{"x": 0, "y": 0, "z": 0}]
-            for l in locs:
+            for loc in locs:
                 tempff += tempff * np.exp(
-                    1j * (qx * l["x"] + qy * l["y"] + qz * l["z"])
+                    1j * (qx * loc["x"] + qy * loc["y"] + qz * loc["z"])
                 )
             ff += tempff
         return ff
