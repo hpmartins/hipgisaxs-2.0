@@ -8,7 +8,7 @@ def sphere(qx, qy, qz, radius):
     qR = np.sqrt(qx**2 + qy**2 + qz**2) * radius
     tmp = np.exp(1j * qz * radius)
 
-    ff = np.ones_like(qR) * vol
+    ff = np.ones_like(qR, complex) * vol
     mask = qR != 0
 
     term = np.sin(qR[mask]) - qR[mask] * np.cos(qR[mask])
