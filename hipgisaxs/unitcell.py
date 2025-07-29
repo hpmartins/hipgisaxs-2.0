@@ -18,9 +18,10 @@ except ImportError:
 
 
 def makeShapeObject(shape):
-    fftype = shape.pop("formfactor")
+    fftype = shape["formfactor"]
     if fftype in globals():
-        ob = globals()[fftype](**shape)
+        shape_args = {k: v for k, v in shape.items() if k != "formfactor"}
+        ob = globals()[fftype](**shape_args)
     else:
         raise ValueError("Unknown formfactor")
     return ob
