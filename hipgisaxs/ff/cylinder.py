@@ -13,7 +13,7 @@ def cylinder(qx, qy, qz, radius, height, orientation=None):
     qpR = np.sqrt(q1**2 + q2**2) * radius
     qparH = q3 * height / 2
 
-    f1 = np.sin(qparH) / qparH
+    f1 = np.sinc(qparH / np.pi)
     f2 = j1(qpR) / qpR
     f3 = np.exp(1j * height * q3 / 2)
 
