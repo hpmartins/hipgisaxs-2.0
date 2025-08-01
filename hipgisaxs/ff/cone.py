@@ -24,7 +24,7 @@ def cone(qx, qy, qz, R, H, angle, orientation=None):
     t1 = 2 * np.pi * tan_a * np.exp(1j * qzp * R)
 
     # integrate
-    ndeg = 8
+    ndeg = 20
     nodes, wghts = leggauss(ndeg)
     nodes = ((Rh - R) / 2) * nodes + (Rh + R) / 2
 
