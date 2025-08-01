@@ -51,10 +51,10 @@ class CoreShell(ShapeBase):
 
     def ff(self, qx, qy, qz):
         ff_core = self.core.ff(qx, qy, qz)
-        refidx_core = 2 * complex(self.core.delta, self.core.beta)
-        ff_shell = self.shell.ff(qx, qy, qz) - ff_core
-        refidx_shell = 2 * complex(self.shell.delta, self.shell.beta)
-        return ff_shell + (refidx_core - refidx_shell) * ff_core
+        refidx_core = complex(self.core.delta, self.core.beta)
+        ff_shell = self.shell.ff(qx, qy, qz)
+        refidx_shell = complex(self.shell.delta, self.shell.beta)
+        return refidx_shell * ff_shell + (refidx_core - refidx_shell) * ff_core
 
 
 class Unitcell:
