@@ -2,17 +2,19 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button
 
+
 def image_show(img, qlims, vmin=None, vmax=None):
 
-    img = np.log(img+1)
+    img = np.log(img + 1)
     if vmin is None:
-        vmin = img.mean() - 3*img.std()
+        vmin = img.mean() - 3 * img.std()
     if vmax is None:
-        vmax = img.mean() + 3*img.std()
+        vmax = img.mean() + 3 * img.std()
 
     fig, axs = plt.subplots()
-    axs.imshow(img, extent=qlims, cmap='jet', origin='lower', vmin=vmin, vmax=vmax)
+    axs.imshow(img, extent=qlims, cmap="jet", origin="lower", vmin=vmin, vmax=vmax)
     plt.show()
+
 
 def image_save(img, fname, qlims, clims=None):
 
@@ -22,12 +24,18 @@ def image_save(img, fname, qlims, clims=None):
         vmin, vmax = None, None
 
     fig, axs = plt.subplots()
-    kwargs = {'extent': qlims, 'cmap':'jet', 'origin': 'lower', 
-              'vmin': vmin, 'vmax': vmax}
-    axs.imshow(np.log(img+1), **kwargs)
-    plt.savefig(fname, bbox_inches='tight', dpi=300)
+    kwargs = {
+        "extent": qlims,
+        "cmap": "jet",
+        "origin": "lower",
+        "vmin": vmin,
+        "vmax": vmax,
+    }
+    axs.imshow(np.log(img + 1), **kwargs)
+    plt.savefig(fname, bbox_inches="tight", dpi=300)
 
-def line_plot(prof, x_axis = None):
+
+def line_plot(prof, x_axis=None):
 
     fig, axs = plt.subplots()
     if x_axis is None:
@@ -35,16 +43,17 @@ def line_plot(prof, x_axis = None):
     axs.plot(x_axis, prof)
     fig.show()
 
+
 def test_clims(img, qlims, vmin=None, vmax=None):
- 
-    img = np.log(img+1)
+
+    img = np.log(img + 1)
     if vmin is None:
         vmin = img.mean() - 3 * img.std()
     if vmax is None:
         vmax = img.mean() + 3 * img.std()
 
     fig, axs = plt.subplots()
-    im = axs.imshow(img, extent=qlims, origin='lower', cmap='jet')
+    im = axs.imshow(img, extent=qlims, origin="lower", cmap="jet")
     im.set_clim(vmin, vmax)
 
     fig.subplots_adjust(bottom=0.5)
@@ -55,21 +64,13 @@ def test_clims(img, qlims, vmin=None, vmax=None):
 
     axvmin = fig.add_axes([0.25, 0.1, 0.65, 0.03])
     vmin_slider = Slider(
-        ax=axvmin,
-        label='Lower cmap limit',
-        valmin=vlow,
-        valmax=vhigh,
-        valinit=vmin
+        ax=axvmin, label="Lower cmap limit", valmin=vlow, valmax=vhigh, valinit=vmin
     )
 
     # Make a horizontal slider to control the vmax
     axvmax = fig.add_axes([0.25, 0.25, 0.65, 0.03])
     vmax_slider = Slider(
-        ax=axvmax,
-        label='Upper cmap limit',
-        valmin=vlow,
-        valmax=vhigh,
-        valinit=vmax
+        ax=axvmax, label="Upper cmap limit", valmin=vlow, valmax=vhigh, valinit=vmax
     )
 
     def updatel(val):
@@ -81,5 +82,4 @@ def test_clims(img, qlims, vmin=None, vmax=None):
     vmin_slider.on_changed(updatel)
     vmax_slider.on_changed(updateu)
 
-    plt.show() 
-    
+    plt.show()

@@ -1,4 +1,3 @@
-
 from .cuboid import cuboid
 from .cone import cone
 from .multicone import cone_stack, cone_shell
@@ -9,7 +8,16 @@ from .gratings import trapezoid, trapezoid_stack
 try:
     from .meshwrapper import MeshFF
 except ImportError:
-    print('Wanring! failed to import meshff extension.')
+    print("Wanring! failed to import meshff extension.")
 
 
-__all__ = [cuboid, cone, cone_stack, cone_shell, cylinder, sphere,  trapezoid, trapezoid_stack]
+__all__ = [
+    cuboid,
+    cone,
+    cone_stack,
+    cone_shell,
+    cylinder,
+    sphere,
+    trapezoid,
+    trapezoid_stack,
+]

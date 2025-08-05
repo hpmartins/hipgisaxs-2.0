@@ -1,10 +1,10 @@
-
 try:
     import cupy
 except ImportError:
     pass
 import numpy as np
 from .meshff import meshff
+
 
 def MeshFF(qx, qy, qz, rotation, vertices):
     """
@@ -25,11 +25,9 @@ def MeshFF(qx, qy, qz, rotation, vertices):
 
     """
 
-
     # ensure types
     if isinstance(qx, cupy.ndarray):
         using_gpu = True
-        
 
     if using_gpu:
         qx = np.float64(qx.get())
