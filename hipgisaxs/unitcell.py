@@ -108,15 +108,16 @@ class Cuboid(ShapeBase):
 
 
 class Cone(ShapeBase):
-    def __init__(self, *args, radius, height, angle, **kwargs):
+    def __init__(self, *args, radius, height, angle, ndeg=10, **kwargs):
         super().__init__(*args, **kwargs)
         self.radius = radius
         self.height = height
         self.angle = angle
+        self.ndeg = ndeg
 
     # calculate form-factor
     def ff(self, qx, qy, qz):
-        return cone(qx, qy, qz, self.radius, self.height, self.angle, self.orient)
+        return cone(qx, qy, qz, self.radius, self.height, self.angle, self.ndeg, self.orient)
 
 
 class Sphere(ShapeBase):

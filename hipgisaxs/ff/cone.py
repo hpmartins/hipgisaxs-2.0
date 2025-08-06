@@ -6,7 +6,7 @@ from numpy.polynomial.legendre import leggauss
 from ..rotation import rotate
 
 
-def cone(qx, qy, qz, R, H, angle, orientation=None):
+def cone(qx, qy, qz, R, H, angle, ndeg, orientation=None):
 
     tan_a = np.tan(angle * np.pi / 180)
     Rh = R - H / tan_a
@@ -24,7 +24,6 @@ def cone(qx, qy, qz, R, H, angle, orientation=None):
     t1 = 2 * np.pi * tan_a * np.exp(1j * qzp * R)
 
     # integrate
-    ndeg = 20
     nodes, wghts = leggauss(ndeg)
     nodes = ((Rh - R) / 2) * nodes + (Rh + R) / 2
 
