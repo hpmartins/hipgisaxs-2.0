@@ -68,18 +68,22 @@ class Unitcell:
                 self.shapes.append(makeShapeObject(shape))
 
     def ff(self, qx, qy, qz):
-        ff = np.zeros(qx.size, dtype=complex)
+        ff = np.zeros(qx.size, dtype=np.complex128)
         for shape in self.shapes:
             dn2 = 2 * complex(shape.delta, shape.beta) - self.ns2
-            tempff = shape.ff(qx, qy, qz)
+            shape_ff = shape.ff(qx, qy, qz)
+
             locs = shape.locations
             if locs is None:
                 locs = [{"x": 0, "y": 0, "z": 0}]
+
+            tempff = np.zeros(qx.size, dtype=np.complex128)
             for loc in locs:
-                tempff += tempff * np.exp(
-                    1j * (qx * loc["x"] + qy * loc["y"] + qz * loc["z"])
-                )
-            ff += tempff
+                phase = np.exp(1j * (qx * loc["x"] + qy * loc["y"] + qz * loc["z"]))
+                tempff += phase
+
+            ff += shape_ff * tempff * dn2
+
         return ff
 
 
