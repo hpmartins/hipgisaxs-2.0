@@ -14,7 +14,5 @@ def cylinder(qx, qy, qz, radius, height, orientation=None):
     qparH = q3 * height / 2
 
     f1 = np.sinc(qparH / np.pi)
-    f2 = j1(qpR) / qpR
-    f3 = np.exp(1j * height * q3 / 2)
-
-    return 2 * vol * f1 * f2 * f3
+    f2 = np.where(qpR == 0, 0.5, j1(qpR) / qpR)
+    return 2 * vol * f1 * f2 * np.exp(1j * qparH)
