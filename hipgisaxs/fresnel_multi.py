@@ -3,10 +3,13 @@ import numpy as np
 
 class Layer:
     def __init__(self, delta, beta, order, thickness):
-        self.one_minus_n2 = 2 * complex(delta, beta)
+        self.delta = delta
+        self.beta = beta
         self.order = order
         self.thickness = thickness
         self.zval = 0
+        self.n = complex(1 - delta, beta)
+        self.n2 = self.n**2
 
 
 class MultiLayer:
@@ -15,18 +18,12 @@ class MultiLayer:
         self.substrate = Layer(4.88e-6, 7.37e-08, -1, 0)
         self._setup_ = False
 
-    def insert(self, layer):
-        if not isinstance(layer, Layer):
-            raise TypeError("only Layer types can be inserted into multilayered object")
-        if not layer.order > 0:
-            raise ValueError("the order of layer must be greater than 0")
-        self.layers.insert(layer.order, layer)
-
     def setup_multilayer(self):
         if self._setup_:
             return
 
-        if len(self.layers) > 1 and self.layers[1].one_minus_n2 == 0:
+        # Remove duplicate vacuum layer if present
+        if len(self.layers) > 1 and self.layers[1].n == 1:
             self.layers = self.layers[1:]
             self.layers[0].thickness = 0
             for idx, layer in enumerate(self.layers):
@@ -45,7 +42,7 @@ class MultiLayer:
         # run only once
         self._setup_ = True
 
-    def parratt_recursion(self, alpha, wavelength, order):
+    def parratt_recursion(self, alpha, k0, order=0):
         self.setup_multilayer()
         nlayer = len(self.layers)
         shape = np.shape(alpha)
@@ -55,23 +52,24 @@ class MultiLayer:
 
         # sin(alpha)
         sin_a = np.sin(alpha)
+        cos_a = np.cos(alpha)
 
         # initialize
-        dims = (nlayer - 1,) + shape
         dim2 = (nlayer,) + shape
 
         # cacl k-value
-        k0 = 2 * np.pi / wavelength
         kz = np.zeros(dim2, np.complex128)
-        for i in range(nlayer):
-            kz[i, :] = -k0 * np.sqrt(sin_a**2 - self.layers[i].one_minus_n2)
+        kz[0, :] = k0 * sin_a
+        for i in range(1, nlayer):
+            kz_temp = k0 * np.sqrt(self.layers[i].n2 - cos_a**2)
+            kz[i, :] = kz_temp * np.where(np.imag(kz_temp) >= 0, 1, -1)
 
         # calculate Rs
         R = np.zeros(dim2, dtype=np.complex128)
         T = np.zeros(dim2, dtype=np.complex128)
         T[-1] = 1
         for i in reversed(range(nlayer - 1)):
-            z = self.layers[i].zval
+            z = self.layers[i].thickness
             en = np.exp(-1j * kz[i] * z)
             ep = np.exp(1j * kz[i] * z)
             t0 = (kz[i] + kz[i + 1]) / (2 * kz[i])
@@ -83,18 +81,16 @@ class MultiLayer:
 
         return T[order] / T0, R[order] / T0
 
-    def propagation_coeffs(self, alphai, alpha, wavelength, order):
-        Ti, Ri = self.parratt_recursion(alphai, wavelength, order)
+    def propagation_coeffs(self, alphai, alpha, k0, order):
+        Ti, Ri = self.parratt_recursion(alphai, k0, order)
+        Tf, Rf = self.parratt_recursion(alpha, k0, order)
 
-        fc = np.zeros((4,) + alpha.shape, np.complex128)
-        mask = alpha > 0
-        if np.any(mask):
-            alpha_positive = alpha[mask]
-            Tf, Rf = self.parratt_recursion(alpha_positive, wavelength, order)
+        result_shape = np.broadcast(Ti, Tf).shape
+        fc = np.zeros((4,) + result_shape, complex)
 
-            fc[0, mask] = Ti * Tf
-            fc[1, mask] = Ri * Tf
-            fc[2, mask] = Ti * Rf
-            fc[3, mask] = Ri * Rf
+        fc[0] = Ti * Tf
+        fc[1] = Ri * Tf
+        fc[2] = Ti * Rf
+        fc[3] = Ri * Rf
 
         return fc

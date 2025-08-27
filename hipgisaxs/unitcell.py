@@ -12,9 +12,7 @@ from .ff import cuboid, cone, cone_stack, cone_shell, cylinder, sphere
 try:
     from .ff import MeshFF
 except ImportError:
-    warnings.warn(
-        "failed to import meshff, required for triangulated structures", stacklevel=2
-    )
+    warnings.warn("failed to import meshff, required for triangulated structures", stacklevel=2)
 
 
 def makeShapeObject(shape):
@@ -60,7 +58,7 @@ class CoreShell(ShapeBase):
 class Unitcell:
     def __init__(self, shapes, delta=0, beta=0):
         self.shapes = []
-        self.ns2 = 2 * complex(delta, beta)
+        self.n = complex(1 - delta, beta)
         for shape in shapes:
             if shape["formfactor"] == "CoreShell":
                 self.shapes.append(CoreShell(shape["Core"], shape["Shell"]))
@@ -68,16 +66,16 @@ class Unitcell:
                 self.shapes.append(makeShapeObject(shape))
 
     def ff(self, qx, qy, qz):
-        ff = np.zeros(qx.size, dtype=np.complex128)
+        ff = np.zeros(qx.size, dtype=complex)
         for shape in self.shapes:
-            dn2 = 2 * complex(shape.delta, shape.beta) - self.ns2
+            n = complex(1 - shape.delta, shape.beta)
+            dn2 = n**2 - self.n**2
             shape_ff = shape.ff(qx, qy, qz)
-
             locs = shape.locations
             if locs is None:
                 locs = [{"x": 0, "y": 0, "z": 0}]
 
-            tempff = np.zeros(qx.size, dtype=np.complex128)
+            tempff = np.zeros(qx.size, dtype=complex)
             for loc in locs:
                 phase = np.exp(1j * (qx * loc["x"] + qy * loc["y"] + qz * loc["z"]))
                 tempff += phase
