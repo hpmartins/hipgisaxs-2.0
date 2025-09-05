@@ -2,6 +2,13 @@ import numpy as np
 from .rotation import rotate
 
 
+def laue_function(x, N):
+    numerator = np.sin(N * x / 2)
+    denominator = np.sin(x / 2)
+    result = np.where(np.abs(N * x) < 1e-16, N, numerator / denominator)
+    return result
+
+
 def structure_factor(q1, q2, q3, d_space, numelm, orient=None):
 
     if not np.shape(d_space) == (3, 3):
@@ -16,15 +23,10 @@ def structure_factor(q1, q2, q3, d_space, numelm, orient=None):
     else:
         qx, qy, qz = rotate(q1, q2, q3, orient)
 
-    # d-spacing is the set of vectors along which the unit cells repeats
-    sf = 1
-    for i in range(3):
+    sf = np.ones_like(qx, dtype=np.complex128)
+    for i, v in enumerate(d_space):
         if numelm[i] > 1:
-            v = d_space[i]
             qd = qx * v[0] + qy * v[1] + qz * v[2]
-            ex = np.exp(1j * qd)
-            with np.errstate(divide="ignore", invalid="ignore"):
-                sft = (1 - ex ** numelm[i]) / (1 - ex)
-            sft = np.where(np.abs(1 - ex) < 1.0e-16, numelm[i], sft)
-            sf *= sft
+            sf *= laue_function(qd, numelm[i]) / numelm[i]
+
     return sf
