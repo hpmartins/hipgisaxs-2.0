@@ -49,37 +49,44 @@ class MultiLayer:
         # account for scalar case
         if len(shape) == 0:
             shape = (1,)
+            alpha = np.array([alpha])
 
-        # sin(alpha)
-        sin_a = np.sin(alpha)
-        cos_a = np.cos(alpha)
+        n2_layers = np.array([layer.n2 for layer in self.layers])
+        n2_layers = n2_layers[:, np.newaxis]
 
-        # initialize
-        dim2 = (nlayer,) + shape
+        cos2_alpha = np.cos(alpha) ** 2
+        cos2_alpha = cos2_alpha[np.newaxis, :]
 
-        # cacl k-value
-        kz = np.zeros(dim2, np.complex128)
-        kz[0, :] = k0 * sin_a
-        for i in range(1, nlayer):
-            kz_temp = k0 * np.sqrt(self.layers[i].n2 - cos_a**2)
-            kz[i, :] = kz_temp * np.where(np.imag(kz_temp) >= 0, 1, -1)
+        kz = k0 * np.sqrt(n2_layers - cos2_alpha)
 
-        # calculate Rs
-        R = np.zeros(dim2, dtype=np.complex128)
-        T = np.zeros(dim2, dtype=np.complex128)
-        T[-1] = 1
+        t_coeff = np.zeros((nlayer - 1,) + shape, dtype=np.complex128)
+        r_coeff = np.zeros((nlayer,) + shape, dtype=np.complex128)
+        r_coeff[-1] = 0.0  # no reflection coming from substrate
         for i in reversed(range(nlayer - 1)):
+            kz_ratio = kz[i + 1] / kz[i]
+            slp = 1.0 + kz_ratio  # (kz[i] + kz[i + 1])/kz[i]
+            slm = 1.0 - kz_ratio  # (kz[i] - kz[i + 1])/kz[i]
+
             z = self.layers[i].thickness
-            en = np.exp(-1j * kz[i] * z)
-            ep = np.exp(1j * kz[i] * z)
-            t0 = (kz[i] + kz[i + 1]) / (2 * kz[i])
-            t1 = (kz[i] - kz[i + 1]) / (2 * kz[i])
-            T[i] = T[i + 1] * en * t0 + R[i + 1] * en * t1
-            R[i] = T[i + 1] * ep * t1 + R[i + 1] * ep * t0
+            phase = np.exp(1j * kz[i] * z) if np.isfinite(z) else 1
+            propagation = phase / (slp + slm * r_coeff[i + 1])
 
-        T0 = T[0]
+            t_coeff[i] = 2.0 * propagation
+            r_coeff[i] = phase * (slm + slp * r_coeff[i + 1]) * propagation
+            # first iteration:
+            # t_coeff = 2/slp = 2kz[i]/(kz[i] + kz[i + 1]) = t_i_i1
+            # r_coeff = slm/slp = (kz[i] - kz[i + 1])/(kz[i] + kz[i + 1]) = r_i_i1
 
-        return T[order] / T0, R[order] / T0
+        T = np.zeros((nlayer,) + shape, dtype=np.complex128)
+        R = np.zeros((nlayer,) + shape, dtype=np.complex128)
+
+        T[0] = 1.0
+        R[0] = r_coeff[0] * T[0]
+        for i in range(1, nlayer):
+            T[i] = T[i - 1] * t_coeff[i - 1]
+            R[i] = r_coeff[i] * T[i]
+
+        return T[order], R[order]
 
     def propagation_coeffs(self, alphai, alpha, k0, order):
         Ti, Ri = self.parratt_recursion(alphai, k0, order)
