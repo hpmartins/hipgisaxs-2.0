@@ -42,7 +42,7 @@ class MultiLayer:
         # run only once
         self._setup_ = True
 
-    def parratt_recursion(self, alpha, k0, order=0):
+    def parratt_recursion(self, alpha, k0, order=0) -> tuple[np.ndarray, np.ndarray]:
         self.setup_multilayer()
         nlayer = len(self.layers)
         shape = np.shape(alpha)
@@ -92,12 +92,12 @@ class MultiLayer:
         Ti, Ri = self.parratt_recursion(alphai, k0, order)
         Tf, Rf = self.parratt_recursion(alpha, k0, order)
 
-        result_shape = np.broadcast(Ti, Tf).shape
+        result_shape = np.broadcast(Ti[:, np.newaxis], Tf).shape
         fc = np.zeros((4,) + result_shape, complex)
 
-        fc[0] = Ti * Tf
-        fc[1] = Ri * Tf
-        fc[2] = Ti * Rf
-        fc[3] = Ri * Rf
+        fc[0] = Ti[:, np.newaxis] * Tf
+        fc[1] = Ri[:, np.newaxis] * Tf
+        fc[2] = Ti[:, np.newaxis] * Rf
+        fc[3] = Ri[:, np.newaxis] * Rf
 
         return fc

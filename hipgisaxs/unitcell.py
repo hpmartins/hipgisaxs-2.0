@@ -74,7 +74,7 @@ class Unitcell:
                 self.shapes.append(makeShapeObject(shape))
 
     def ff(self, qx, qy, qz):
-        ff = np.zeros(qx.size, dtype=complex)
+        ff = np.zeros(qx.shape, dtype=complex)
         for shape in self.shapes:
             if isinstance(shape, CoreShell):
                 shape_ff = shape.ff(qx, qy, qz, n_ref=self.n)
@@ -86,12 +86,12 @@ class Unitcell:
             if locs is None:
                 locs = [{"x": 0, "y": 0, "z": 0}]
 
-            tempff = np.zeros(qx.size, dtype=complex)
+            tempff = np.zeros(qx.shape, dtype=complex)
             for loc in locs:
                 phase = np.exp(1j * (qx * loc["x"] + qy * loc["y"] + qz * loc["z"]))
                 tempff += phase
 
-            ff += shape_ff * tempff
+            ff += shape_ff.reshape(qx.shape) * tempff
 
         return ff
 
